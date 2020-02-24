@@ -27,8 +27,19 @@ let rec fold fLeaf fNode acc (tree:Tree<'LeafData,'INodeData>) :'r =
         // thread the local accumulator through all the subitems using Seq.fold
         let finalAccum = subtrees |> Seq.fold recurse localAccum 
         // ... and return it
-        finalAccum 
+        finalAccum
 
+// map function
+let rec map fLeaf fNode (tree:Tree<'LeafData,'INodeData>) = 
+    let recurse = map fLeaf fNode  
+    match tree with
+    | LeafNode leafInfo -> 
+        let newLeafInfo = fLeaf leafInfo
+        LeafNode newLeafInfo 
+    | InternalNode (nodeInfo,subtrees) -> 
+        let newNodeInfo = fNode nodeInfo
+        let newSubtrees = subtrees |> Seq.map recurse 
+        InternalNode (newNodeInfo, newSubtrees)
 
 
 type MailBoxInfo = 

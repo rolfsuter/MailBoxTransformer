@@ -41,6 +41,15 @@ let rec map fLeaf fNode (tree:Tree<'LeafData,'INodeData>) =
         let newSubtrees = subtrees |> Seq.map recurse 
         InternalNode (newNodeInfo, newSubtrees)
 
+// iter function
+let rec iter fLeaf fNode (tree:Tree<'LeafData,'INodeData>) = 
+    let recurse = iter fLeaf fNode  
+    match tree with
+    | LeafNode leafInfo -> 
+        fLeaf leafInfo
+    | InternalNode (nodeInfo,subtrees) -> 
+        subtrees |> Seq.iter recurse 
+        fNode nodeInfo
 
 type MailBoxInfo = 
     { Name: string }

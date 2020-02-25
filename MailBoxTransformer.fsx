@@ -58,20 +58,44 @@ type MailBoxInfo =
 
 type FolderInfo = 
     { Name: string 
-      Path: string}
+      Path: string }
 
 type MailBoxItem = Tree<MailBoxInfo, FolderInfo>
 
+let createMailBoxInfo path =
+    { MailBoxInfo.Name = Path.GetFileName path
+      MailBoxInfo.Path = path } 
+
+let createFolderInfo path =
+    { FolderInfo.Name = Path.GetFileName path
+      FolderInfo.Path = path } 
 
 
-let folder = @"/Users/rolf/Documents/Mail_Export_backup/"
-let target = @"/Users/rolf/Documents/Mail_renamed/"
+let fromMailBox (mailBoxInfo:MailBoxInfo) =
+    LeafNode mailBoxInfo
 
+let rec fromFolder (folderInfo:FolderInfo) =
+    let isMailBox (path: string) =
+        path.EndsWith(".mbox")
 
-let folders = Directory.GetDirectories(folder, "*mbox", System.IO.SearchOption.AllDirectories)
+    let subItems = seq {
+        let dirs = Directory.EnumerateDirectories folderInfo.Path
+        yield! 
+            dirs 
+            |> Seq.filter isMailBox 
+            |> Seq.map (createMailBoxInfo >> fromMailBox)
+        yield! 
+            dirs 
+            |> Seq.filter (isMailBox >> not) 
+            |> Seq.map (createFolderInfo >> fromFolder) }
+    InternalNode (folderInfo, subItems)
 
-folders
-|> List.ofArray
-// |> List.map (Path.GetFileName)
-|> List.iter (printfn "%s")
+let folder = @"/Users/rolf/Documents/Mail_Export_backup"
 
+let source = 
+    { Name = Path.GetFileName folder 
+      Path = folder }
+
+source 
+|> fromFolder
+|> iter (fun x -> printfn "# MailBox: %s" x.Path) (fun y -> printfn "# Folder:  %s" y.Path) 

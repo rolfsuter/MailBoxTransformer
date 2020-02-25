@@ -1,3 +1,4 @@
+open System.IO
 
 // Tree datastructure and processing functions
 // Reference: https://fsharpforfunandprofit.com/posts/recursive-types-and-folds-3b
@@ -52,9 +53,25 @@ let rec iter fLeaf fNode (tree:Tree<'LeafData,'INodeData>) =
         fNode nodeInfo
 
 type MailBoxInfo = 
-    { Name: string }
+    { Name: string 
+      Path: string }
 
 type FolderInfo = 
-    { Name: string }
+    { Name: string 
+      Path: string}
 
 type MailBoxItem = Tree<MailBoxInfo, FolderInfo>
+
+
+
+let folder = @"/Users/rolf/Documents/Mail_Export_backup/"
+let target = @"/Users/rolf/Documents/Mail_renamed/"
+
+
+let folders = Directory.GetDirectories(folder, "*mbox", System.IO.SearchOption.AllDirectories)
+
+folders
+|> List.ofArray
+// |> List.map (Path.GetFileName)
+|> List.iter (printfn "%s")
+

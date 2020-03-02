@@ -49,8 +49,9 @@ let rec iter fLeaf fNode (tree:Tree<'LeafData,'INodeData>) =
     | LeafNode leafInfo -> 
         fLeaf leafInfo
     | InternalNode (nodeInfo,subtrees) -> 
-        subtrees |> Seq.iter recurse 
         fNode nodeInfo
+        subtrees |> Seq.iter recurse 
+        
 
 type MailBoxInfo = 
     { Name: string 
@@ -99,3 +100,16 @@ let source =
 source 
 |> fromFolder
 |> iter (fun x -> printfn "# MailBox: %s" x.Path) (fun y -> printfn "# Folder:  %s" y.Path) 
+
+let dirListing mailBoxItem =
+    let mapMailBox (mboxi:MailBoxInfo) = 
+        sprintf "%s"  mboxi.Path
+    let mapDir (diri:FolderInfo) = 
+        diri.Path 
+    map mapMailBox mapDir mailBoxItem
+
+source
+|> fromFolder
+|> dirListing 
+|> iter (printfn "%s") (printfn "\n%s")
+

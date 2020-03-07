@@ -1,3 +1,4 @@
+open System
 open System.IO
 
 // Tree datastructure and processing functions
@@ -7,52 +8,53 @@ type Tree<'LeafData,'INodeData> =
     | LeafNode of 'LeafData
     | InternalNode of 'INodeData * Tree<'LeafData,'INodeData> seq
 
-// cata is bottom-up recursion
-let rec cata fLeaf fNode (tree:Tree<'LeafData,'INodeData>) :'r = 
-    let recurse = cata fLeaf fNode  
-    match tree with
-    | LeafNode leafInfo -> 
-        fLeaf leafInfo 
-    | InternalNode (nodeInfo,subtrees) -> 
-        fNode nodeInfo (subtrees |> Seq.map recurse)
+module Tree = 
+    // cata is bottom-up recursion
+    let rec cata fLeaf fNode (tree:Tree<'LeafData,'INodeData>) :'r = 
+        let recurse = cata fLeaf fNode  
+        match tree with
+        | LeafNode leafInfo -> 
+            fLeaf leafInfo 
+        | InternalNode (nodeInfo,subtrees) -> 
+            fNode nodeInfo (subtrees |> Seq.map recurse)
 
-// fold is top-down iteration    
-let rec fold fLeaf fNode acc (tree:Tree<'LeafData,'INodeData>) :'r = 
-    let recurse = fold fLeaf fNode  
-    match tree with
-    | LeafNode leafInfo -> 
-        fLeaf acc leafInfo 
-    | InternalNode (nodeInfo,subtrees) -> 
-        // determine the local accumulator at this level
-        let localAccum = fNode acc nodeInfo
-        // thread the local accumulator through all the subitems using Seq.fold
-        let finalAccum = subtrees |> Seq.fold recurse localAccum 
-        // ... and return it
-        finalAccum
+    // fold is top-down iteration    
+    let rec fold fLeaf fNode acc (tree:Tree<'LeafData,'INodeData>) :'r = 
+        let recurse = fold fLeaf fNode  
+        match tree with
+        | LeafNode leafInfo -> 
+            fLeaf acc leafInfo 
+        | InternalNode (nodeInfo,subtrees) -> 
+            // determine the local accumulator at this level
+            let localAccum = fNode acc nodeInfo
+            // thread the local accumulator through all the subitems using Seq.fold
+            let finalAccum = subtrees |> Seq.fold recurse localAccum 
+            // ... and return it
+            finalAccum
 
-// map function
-let rec map fLeaf fNode (tree:Tree<'LeafData,'INodeData>) = 
-    let recurse = map fLeaf fNode  
-    match tree with
-    | LeafNode leafInfo -> 
-        let newLeafInfo = fLeaf leafInfo
-        LeafNode newLeafInfo 
-    | InternalNode (nodeInfo,subtrees) -> 
-        let newNodeInfo = fNode nodeInfo
-        let newSubtrees = subtrees |> Seq.map recurse 
-        InternalNode (newNodeInfo, newSubtrees)
+    // map function
+    let rec map fLeaf fNode (tree:Tree<'LeafData,'INodeData>) = 
+        let recurse = map fLeaf fNode  
+        match tree with
+        | LeafNode leafInfo -> 
+            let newLeafInfo = fLeaf leafInfo
+            LeafNode newLeafInfo 
+        | InternalNode (nodeInfo,subtrees) -> 
+            let newNodeInfo = fNode nodeInfo
+            let newSubtrees = subtrees |> Seq.map recurse 
+            InternalNode (newNodeInfo, newSubtrees)
 
-// iter function
-let rec iter fLeaf fNode (tree:Tree<'LeafData,'INodeData>) = 
-    let recurse = iter fLeaf fNode  
-    match tree with
-    | LeafNode leafInfo -> 
-        fLeaf leafInfo
-    | InternalNode (nodeInfo,subtrees) -> 
-        fNode nodeInfo
-        subtrees |> Seq.iter recurse 
+    // iter function
+    let rec iter fLeaf fNode (tree:Tree<'LeafData,'INodeData>) = 
+        let recurse = iter fLeaf fNode  
+        match tree with
+        | LeafNode leafInfo -> 
+            fLeaf leafInfo
+        | InternalNode (nodeInfo,subtrees) -> 
+            fNode nodeInfo
+            subtrees |> Seq.iter recurse 
+
         
-
 type MailBoxInfo = 
     { Name: string 
       Path: string }
@@ -63,11 +65,11 @@ type FolderInfo =
 
 type MailBoxItem = Tree<MailBoxInfo, FolderInfo>
 
-let createMailBoxInfo path =
+let createMailBoxInfo (path:string) =
     { MailBoxInfo.Name = Path.GetFileName path
       MailBoxInfo.Path = path } 
 
-let createFolderInfo path =
+let createFolderInfo (path:string) =
     { FolderInfo.Name = Path.GetFileName path
       FolderInfo.Path = path } 
 
@@ -91,6 +93,8 @@ let rec fromFolder (folderInfo:FolderInfo) =
             |> Seq.map (createFolderInfo >> fromFolder) }
     InternalNode (folderInfo, subItems)
 
+
+// --
 let folder = @"/Users/rolf/Documents/Mail_Export_backup"
 
 let source = 
@@ -99,17 +103,24 @@ let source =
 
 source 
 |> fromFolder
-|> iter (fun x -> printfn "# MailBox: %s" x.Path) (fun y -> printfn "# Folder:  %s" y.Path) 
+|> Tree.iter (fun x -> printfn "# MailBox: %s" x.Path) (fun y -> printfn "# Folder:  %s" y.Path) 
 
 let dirListing mailBoxItem =
     let mapMailBox (mboxi:MailBoxInfo) = 
         sprintf "%s"  mboxi.Path
     let mapDir (diri:FolderInfo) = 
         diri.Path 
-    map mapMailBox mapDir mailBoxItem
+    Tree.map mapMailBox mapDir mailBoxItem
 
-source
-|> fromFolder
-|> dirListing 
-|> iter (printfn "%s") (printfn "\n%s")
+let workflow1 = 
+    source
+    |> fromFolder
+    |> dirListing 
+    |> Tree.iter (printfn "%s") (printfn "\n%s")
 
+let workflow2 = 
+    source
+    |> fromFolder
+    |> dirListing 
+    |> Tree.map (printfn "%s") (printfn "%s")
+    |> Tree.fold (fun a x -> () ) (fun a x -> () ) ()

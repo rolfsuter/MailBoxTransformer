@@ -9,6 +9,12 @@ type Tree<'LeafData,'INodeData> =
     | InternalNode of 'INodeData * Tree<'LeafData,'INodeData> seq
 
 module Tree = 
+    /// Creates a leaf. Does not add much value
+    let leaf x = LeafNode x
+
+    /// Create a node
+    let node x xs = InternalNode (x, xs)
+
     // cata is bottom-up recursion
     let rec cata fLeaf fNode (tree:Tree<'LeafData,'INodeData>) :'r = 
         let recurse = cata fLeaf fNode  
@@ -17,6 +23,9 @@ module Tree =
             fLeaf leafInfo 
         | InternalNode (nodeInfo,subtrees) -> 
             fNode nodeInfo (subtrees |> Seq.map recurse)
+
+    // choose is derived from https://blog.ploeh.dk/2019/09/16/picture-archivist-in-f/ (swapped the node an leave function)
+    let choose f = cata (f >> Option.map LeafNode) (fun x -> Seq.choose id >> node x >> Some)
 
     // fold is top-down iteration    
     let rec fold fLeaf fNode acc (tree:Tree<'LeafData,'INodeData>) :'r = 
@@ -32,9 +41,10 @@ module Tree =
             // ... and return it
             finalAccum
 
-    // map function
-    let rec map fLeaf fNode (tree:Tree<'LeafData,'INodeData>) = 
-        let recurse = map fLeaf fNode  
+    // bimap function
+    /// map on the leaves as well as on the nodes
+    let rec bimap fLeaf fNode (tree:Tree<'LeafData,'INodeData>) = 
+        let recurse = bimap fLeaf fNode  
         match tree with
         | LeafNode leafInfo -> 
             let newLeafInfo = fLeaf leafInfo
@@ -43,6 +53,9 @@ module Tree =
             let newNodeInfo = fNode nodeInfo
             let newSubtrees = subtrees |> Seq.map recurse 
             InternalNode (newNodeInfo, newSubtrees)
+
+    /// map on the leaves
+    let map f = bimap f id
 
     // iter function
     let rec iter fLeaf fNode (tree:Tree<'LeafData,'INodeData>) = 
@@ -93,8 +106,85 @@ let rec fromFolder (folderInfo:FolderInfo) =
             |> Seq.map (createFolderInfo >> fromFolder) }
     InternalNode (folderInfo, subItems)
 
-
 // --
+
+type MailBoxFile = 
+    { File: FileInfo }
+
+let isMailBoxFile (tree:Tree<FileInfo, FileInfo>) =
+    match tree with
+    | LeafNode x when x.Name = "mbox" -> true
+    | _ -> false 
+
+let isMailBox (tree:Tree<FileInfo, FileInfo>) =
+    match tree with
+    | InternalNode (x, ys) when x.Name.EndsWith(".mbox") && (Seq.exists isMailBoxFile ys) 
+        -> true 
+    | _ -> false
+    
+
+let testMailBox =
+    InternalNode ("EPFL.mbox", seq{ LeafNode "mbox" } )
+
+testMailBox |> Tree.bimap (FileInfo) (FileInfo) |> isMailBox
+
+
+
+
+let rec readTree path =
+    if File.Exists path
+    then LeafNode path
+    else
+        let dirsAndFiles = Directory.EnumerateFileSystemEntries path
+        let branches = Seq.map readTree dirsAndFiles |> Seq.toList
+        InternalNode (path, branches)
+
+
+// this works
+let rec printMailBoxes (tree:Tree<FileInfo, FileInfo>) =
+    match tree with
+    | LeafNode _ -> ()
+    // | node when isMailBox node ->
+    //     let (InternalNode(x, ys)) = node 
+    //     printfn "#mbox: %s" x.FullName
+    | InternalNode (x, ys) when InternalNode (x, ys) |> isMailBox ->
+        printfn "#mbox: %s" x.FullName
+    | InternalNode (x, ys) -> 
+        printfn "#node: %s" x.FullName
+        Seq.iter printMailBoxes ys
+
+// this works
+let printMailBoxes2 (tree:Tree<FileInfo, FileInfo>) =
+    let rec recurse x =
+        match x with
+        | LeafNode _ -> ()
+        | InternalNode (x, ys) when InternalNode (x, ys) |> isMailBox ->
+            printfn "#mbox: %s" x.FullName
+        | InternalNode (x, ys) -> 
+            printfn "#node: %s" x.FullName
+            Seq.iter recurse ys
+    recurse tree      
+
+// this works :-)
+let findMailBoxes (sourceTree:Tree<FileInfo, FileInfo>) =
+    let rec recurse  (x:Tree<FileInfo, FileInfo>) =
+        match x with
+        | LeafNode x -> 
+            printfn "#unknown: %s" x.Name
+            LeafNode None
+        | InternalNode (x, ys) when InternalNode (x, ys) |> isMailBox ->
+            printfn "#mbox   : %s" x.FullName
+            // let s = seq { yield LeafNode x }
+            // s
+            LeafNode (Some x)
+        | InternalNode (x, ys) -> 
+            printfn "#node   : %s" x.FullName
+            let newNode = x
+            let newSubtrees = ys |> Seq.map recurse
+            InternalNode (newNode, newSubtrees)
+    recurse sourceTree  
+
+// ### Composition ###
 let folder = @"/Users/rolf/Documents/Mail_Export_backup"
 
 let source = 
@@ -110,7 +200,7 @@ let dirListing mailBoxItem =
         sprintf "%s"  mboxi.Path
     let mapDir (diri:FolderInfo) = 
         diri.Path 
-    Tree.map mapMailBox mapDir mailBoxItem
+    Tree.bimap mapMailBox mapDir mailBoxItem
 
 let workflow1 = 
     source
@@ -122,5 +212,22 @@ let workflow2 =
     source
     |> fromFolder
     |> dirListing 
-    |> Tree.map (printfn "%s") (printfn "%s")
+    |> Tree.bimap (printfn "%s") (printfn "%s")
     |> Tree.fold (fun a x -> () ) (fun a x -> () ) ()
+
+let workflow3 =
+    let sourceTree = readTree folder |> Tree.bimap FileInfo FileInfo
+    let mailBoxTree = 
+        sourceTree   
+        |> findMailBoxes  // unknown files generate NONE leaves
+        |> Tree.choose id // filter out NONE leaves
+    
+    mailBoxTree
+    |> Option.map (Tree.iter (fun x -> printfn "         %s" x.FullName) (fun x -> printfn "         %s" x.FullName))
+
+// Composition
+let transformMailBox source destination =
+    let sourceTree = readTree source |> Tree.bimap FileInfo FileInfo
+    sourceTree
+
+transformMailBox folder ()

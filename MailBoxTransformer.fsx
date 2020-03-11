@@ -108,8 +108,7 @@ let rec fromFolder (folderInfo:FolderInfo) =
 
 // --
 
-type MailBoxFile = 
-    { File: FileInfo }
+
 
 let isMailBoxFile (tree:Tree<FileInfo, FileInfo>) =
     match tree with
@@ -166,9 +165,9 @@ let printMailBoxes2 (tree:Tree<FileInfo, FileInfo>) =
     recurse tree      
 
 // this works :-)
-let findMailBoxes (sourceTree:Tree<FileInfo, FileInfo>) =
-    let rec recurse  (x:Tree<FileInfo, FileInfo>) =
-        match x with
+let rec findMailBoxes (sourceTree:Tree<FileInfo, FileInfo>) =
+    // let rec recurse  (x:Tree<FileInfo, FileInfo>) =
+        match sourceTree with
         | LeafNode x -> 
             printfn "#unknown: %s" x.Name
             LeafNode None
@@ -180,9 +179,17 @@ let findMailBoxes (sourceTree:Tree<FileInfo, FileInfo>) =
         | InternalNode (x, ys) -> 
             printfn "#node   : %s" x.FullName
             let newNode = x
-            let newSubtrees = ys |> Seq.map recurse
+            let newSubtrees = ys |> Seq.map findMailBoxes//recurse
             InternalNode (newNode, newSubtrees)
-    recurse sourceTree  
+    // recurse sourceTree  
+
+// ---
+type MailBoxFile = 
+    { File: FileInfo }
+
+let readMailBox file =
+    file |> Option.map (fun x -> { File = x } )
+
 
 // ### Composition ###
 let folder = @"/Users/rolf/Documents/Mail_Export_backup"
@@ -220,10 +227,10 @@ let workflow3 =
     let mailBoxTree = 
         sourceTree   
         |> findMailBoxes  // unknown files generate NONE leaves
-        |> Tree.choose id // filter out NONE leaves
-    
+        |> Tree.choose readMailBox // filter out NONE leaves and read the Mail Boxes
+        
     mailBoxTree
-    |> Option.map (Tree.iter (fun x -> printfn "         %s" x.FullName) (fun x -> printfn "         %s" x.FullName))
+    |> Option.map (Tree.iter (fun x -> printfn "          %s" x.File.FullName) (fun x -> printfn "          %s" x.FullName))
 
 // Composition
 let transformMailBox source destination =

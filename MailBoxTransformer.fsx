@@ -191,6 +191,16 @@ let readMailBox file =
     file |> Option.map (fun x -> { File = x } )
 
 
+
+// Creates tree with new structure
+let moveTo destination t = //(t:Tree<MailBoxFile, FileInfo>) =
+    let newTree =
+        Tree.bimap (fun leave -> leave.File) (fun (node:FileInfo) -> node.Name) t
+    match newTree with
+    | InternalNode (_, xs) -> InternalNode(destination, xs)
+    | _  -> Tree.node destination (seq { Tree.leaf(FileInfo("")) } )
+
+
 // ### Composition ###
 let folder = @"/Users/rolf/Documents/Mail_Export_backup"
 
@@ -223,14 +233,23 @@ let workflow2 =
     |> Tree.fold (fun a x -> () ) (fun a x -> () ) ()
 
 let workflow3 =
+    let destination = @""
+
     let sourceTree = readTree folder |> Tree.bimap FileInfo FileInfo
     let mailBoxTree = 
         sourceTree   
         |> findMailBoxes  // unknown files generate NONE leaves
         |> Tree.choose readMailBox // filter out NONE leaves and read the Mail Boxes
         
-    mailBoxTree
-    |> Option.map (Tree.iter (fun x -> printfn "          %s" x.File.FullName) (fun x -> printfn "          %s" x.FullName))
+    // mailBoxTree
+    // |> Option.map (Tree.iter (fun x -> printfn "          %s" x.File.FullName) (fun x -> printfn "          %s" x.FullName))
+
+    // let destinationTree =
+        // Option.map (moveTo destination >> calculateMoves) mailBoxTree
+    Option.map (moveTo destination) mailBoxTree
+        // |> Option.iter (Tree.iter (printfn "%A") (printfn "%A"))
+    
+    // Option.iter writeTree destinationTree
 
 // Composition
 let transformMailBox source destination =

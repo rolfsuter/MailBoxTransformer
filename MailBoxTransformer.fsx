@@ -201,6 +201,20 @@ let moveTo destination t = //(t:Tree<MailBoxFile, FileInfo>) =
     | _  -> Tree.node destination (seq { Tree.leaf(FileInfo("")) } )
 
 
+type Move = { Source : FileInfo; Destination : FileInfo }
+
+let calculateMoves =
+    let replaceDirectory (f : FileInfo) d =
+        FileInfo (Path.Combine (d, f.Name))
+    let rec imp path = function
+        | LeafNode x ->
+            LeafNode { Source = x; Destination = replaceDirectory x path }
+        | InternalNode (x, xs) ->
+            let newNPath = Path.Combine (path, x)
+            Tree.node newNPath (Seq.map (imp newNPath) xs)
+    imp ""
+
+
 // ### Composition ###
 let folder = @"/Users/rolf/Documents/Mail_Export_backup"
 
@@ -233,7 +247,7 @@ let workflow2 =
     |> Tree.fold (fun a x -> () ) (fun a x -> () ) ()
 
 let workflow3 =
-    let destination = @""
+    let destination = @"/Users/rolf/Desktop"
 
     let sourceTree = readTree folder |> Tree.bimap FileInfo FileInfo
     let mailBoxTree = 
@@ -246,7 +260,7 @@ let workflow3 =
 
     // let destinationTree =
         // Option.map (moveTo destination >> calculateMoves) mailBoxTree
-    Option.map (moveTo destination) mailBoxTree
+    Option.map (moveTo destination >> calculateMoves) mailBoxTree
         // |> Option.iter (Tree.iter (printfn "%A") (printfn "%A"))
     
     // Option.iter writeTree destinationTree

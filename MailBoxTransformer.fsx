@@ -280,23 +280,16 @@ let dirListing mailBoxItem =
         diri.Path 
     Tree.bimap mapMailBox mapDir mailBoxItem
 
-let workflow1 = 
-    source
-    |> fromFolder
-    |> dirListing 
-    |> Tree.iter (printfn "%s") (printfn "\n%s")
 
-let workflow2 = 
-    source
-    |> fromFolder
-    |> dirListing 
-    |> Tree.bimap (printfn "%s") (printfn "%s")
-    |> Tree.fold (fun a x -> () ) (fun a x -> () ) ()
 
-let workflow3 =
-    let destination = @"/Users/rolf/Desktop/test"
+let destination = @"/Users/rolf/Desktop/test"
 
-    let sourceTree = readTree folder |> Tree.bimap FileInfo FileInfo
+// Composition
+
+/// Transforms the MailBoxes of the source directory and writes them 
+/// to the destination.
+let transformMailBox source destination = 
+    let sourceTree = readTree source |> Tree.bimap FileInfo FileInfo
     let mailBoxTree = 
         sourceTree   
         |> findMailBoxes  // unknown files generate NONE leaves
@@ -305,9 +298,4 @@ let workflow3 =
         Option.map (moveTo destination >> calculateMoves) mailBoxTree
     Option.iter writeTree destinationTree
 
-// Composition
-let transformMailBox source destination =
-    let sourceTree = readTree source |> Tree.bimap FileInfo FileInfo
-    sourceTree
-
-transformMailBox folder ()
+transformMailBox folder destination

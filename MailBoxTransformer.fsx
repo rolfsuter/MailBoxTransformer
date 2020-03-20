@@ -261,6 +261,7 @@ let writeTree t =
         copy m
         // if compareFiles m then m.Source.Delete ()
     Tree.iterLeaves move t
+
 // ### Composition ###
 let folder = @"/Users/rolf/Documents/Mail_test"
 
@@ -300,16 +301,9 @@ let workflow3 =
         sourceTree   
         |> findMailBoxes  // unknown files generate NONE leaves
         |> Tree.choose readMailBox // filter out NONE leaves and read the Mail Boxes
-        
-    // mailBoxTree
-    // |> Option.map (Tree.iter (fun x -> printfn "          %s" x.File.FullName) (fun x -> printfn "          %s" x.FullName))
-
-    // let destinationTree =
-        // Option.map (moveTo destination >> calculateMoves) mailBoxTree
-    Option.map (moveTo destination >> calculateMoves) mailBoxTree
-            // |> Option.iter (Tree.iter (printfn "%A") (printfn "%A"))
-    
-    // Option.iter writeTree destinationTree
+    let destinationTree =
+        Option.map (moveTo destination >> calculateMoves) mailBoxTree
+    Option.iter writeTree destinationTree
 
 // Composition
 let transformMailBox source destination =

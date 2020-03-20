@@ -237,27 +237,14 @@ let calculateMoves =
 
 let writeTree t =
     let copy m =
-        if Directory.Exists m.Destination.DirectoryName |> not
-        then 
-            printfn "try to create directory: %A" m.Destination.DirectoryName
-            Directory.CreateDirectory m.Destination.DirectoryName |> ignore
-            printfn "created: %s" m.Destination.DirectoryName
-        else 
-            printfn "not created: %s" m.Destination.DirectoryName
-
-        if File.Exists m.Destination.FullName |> not
-        then
-            printfn "try to create file: %A" m.Destination.FullName
-            m.Source.CopyTo m.Destination.FullName |> ignore
-            printfn "Copied to   %s" m.Destination.FullName
-        else
-            printfn "not copied: %s" m.Destination.FullName        
+        Directory.CreateDirectory m.Destination.DirectoryName |> ignore
+        m.Source.CopyTo m.Destination.FullName |> ignore
+        printfn "Copied to %s" m.Destination.FullName
     let compareFiles m =
         let sourceStream = File.ReadAllBytes m.Source.FullName
         let destinationStream = File.ReadAllBytes m.Destination.FullName
         sourceStream = destinationStream
     let move m =
-        printfn "\n          %s\n                 %s\n" m.Source.FullName m.Destination.FullName
         copy m
         // if compareFiles m then m.Source.Delete ()
     Tree.iterLeaves move t

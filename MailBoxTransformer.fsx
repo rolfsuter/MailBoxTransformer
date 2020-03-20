@@ -203,23 +203,33 @@ let readMailBox file =
 
 
 
-// Creates tree with new structure
+/// Creates a tree with new structure. The leaves carry the source path of the 
+/// MailBoxFiles and the nodes the directory name without path. The root node
+/// contains the destination path.
 let moveTo destination t = //(t:Tree<MailBoxFile, FileInfo>) =
     let newTree =
-        Tree.bimap (fun leave -> leave.File) (fun (node:FileInfo) -> node.Name) t
+        Tree.bimap (fun leaf -> leaf.File) (fun (node:FileInfo) -> node.Name + ".sbd") t
     match newTree with
-    | InternalNode (_, xs) -> InternalNode(destination, xs)
-    | _  -> Tree.node destination (seq { Tree.leaf(FileInfo("")) } )
+    | InternalNode (_, xs) -> InternalNode(destination, xs)             // Replace the path in the root node
+    | _  -> Tree.node destination (seq { Tree.leaf(FileInfo("")) } )    // Default value if there is a failure/no mailbox
 
 
 type Move = { Source : FileInfo; Destination : FileInfo }
 
+/// Calculates the mailbox moves based on the source path in the leaves and
+/// the tree structere with the directory names stored in the tree nodes.
 let calculateMoves =
     let replaceDirectory (f : FileInfo) d =
         FileInfo (Path.Combine (d, f.Name))
     let rec imp path = function
-        | LeafNode x ->
-            LeafNode { Source = x; Destination = replaceDirectory x path }
+        | LeafNode (x:FileInfo) ->
+            LeafNode 
+                { Source =  (x.FullName, "mbox") |> Path.Combine |> FileInfo
+                  Destination = 
+                    let p =  (replaceDirectory x path).FullName
+                    (Path.GetDirectoryName(p), Path.GetFileNameWithoutExtension(p))
+                    |> Path.Combine
+                    |> FileInfo }
         | InternalNode (x, xs) ->
             let newNPath = Path.Combine (path, x)
             Tree.node newNPath (Seq.map (imp newNPath) xs)
@@ -252,7 +262,7 @@ let writeTree t =
         // if compareFiles m then m.Source.Delete ()
     Tree.iterLeaves move t
 // ### Composition ###
-let folder = @"/Users/rolf/Documents/Mail_Export_backup"
+let folder = @"/Users/rolf/Documents/Mail_test"
 
 let source = 
     { Name = Path.GetFileName folder 
@@ -283,7 +293,7 @@ let workflow2 =
     |> Tree.fold (fun a x -> () ) (fun a x -> () ) ()
 
 let workflow3 =
-    let destination = @"/Users/rolf/Desktop"
+    let destination = @"/Users/rolf/Desktop/test"
 
     let sourceTree = readTree folder |> Tree.bimap FileInfo FileInfo
     let mailBoxTree = 

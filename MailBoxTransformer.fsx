@@ -67,6 +67,17 @@ module Tree =
             fNode nodeInfo
             subtrees |> Seq.iter recurse 
 
+    /// iter through the leaves. Does not act on the nodes.
+    let rec iterLeaves f t =
+        let recurse = iterLeaves f
+        match t with
+        | LeafNode leafInfo -> f leafInfo
+        | InternalNode (nodeInfo, subtrees) ->
+            subtrees |> Seq.iter recurse
+
+    /// implementation variant of iterLeaves. Requires validation.
+    let iterLeaves2 f t = iter f ignore t
+    
         
 type MailBoxInfo = 
     { Name: string 
@@ -261,7 +272,7 @@ let workflow3 =
     // let destinationTree =
         // Option.map (moveTo destination >> calculateMoves) mailBoxTree
     Option.map (moveTo destination >> calculateMoves) mailBoxTree
-        // |> Option.iter (Tree.iter (printfn "%A") (printfn "%A"))
+            // |> Option.iter (Tree.iter (printfn "%A") (printfn "%A"))
     
     // Option.iter writeTree destinationTree
 

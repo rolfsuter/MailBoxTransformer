@@ -13,6 +13,9 @@ let rec readTree path =
         let branches = Seq.map readTree dirsAndFiles |> Seq.toList
         InternalNode (path, branches)
 
+let readMailBox file =
+    file |> Option.map (fun x -> { File = x } )
+
 let writeTree t =
     let copy m =
         Directory.CreateDirectory m.Destination.DirectoryName |> ignore

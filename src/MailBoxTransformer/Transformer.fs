@@ -124,8 +124,7 @@ module Transformer =
     // // ---
 
 
-    let readMailBox file =
-        file |> Option.map (fun x -> { File = x } )
+
 
 
 

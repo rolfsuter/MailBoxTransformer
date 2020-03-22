@@ -1,8 +1,9 @@
-﻿// Learn more about F# at http://fsharp.org
-
-open System
+﻿open System
+open MailBoxTransformer.Transformer
 
 [<EntryPoint>]
 let main argv =
-    printfn "Hello World from F#!"
+    match argv with
+    | [|source; destination|] -> transformMailBox source destination
+    | _ -> printfn "Please provide source and destination directories as arguments."
     0 // return an integer exit code

@@ -103,6 +103,9 @@ module Transformer =
     //     recurse tree      
 
     // // this works :-)
+
+    /// Look for the MailBoxes in a given Tree with directores and files. Returns a new tree with
+    /// paths to the MailBoxes. Returns NONE if a leaf or node is not a MailBox.
     let rec findMailBoxes (sourceTree:Tree<FileInfo, FileInfo>) =
         // let rec recurse  (x:Tree<FileInfo, FileInfo>) =
             match sourceTree with

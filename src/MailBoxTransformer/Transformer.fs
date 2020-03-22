@@ -160,22 +160,10 @@ module Transformer =
                 Tree.node newNPath (Seq.map (imp newNPath) xs)
         imp ""
 
-    let writeTree t =
-        let copy m =
-            Directory.CreateDirectory m.Destination.DirectoryName |> ignore
-            m.Source.CopyTo m.Destination.FullName |> ignore
-            printfn "Copied to %s" m.Destination.FullName
-        let compareFiles m =
-            let sourceStream = File.ReadAllBytes m.Source.FullName
-            let destinationStream = File.ReadAllBytes m.Destination.FullName
-            sourceStream = destinationStream
-        let move m =
-            copy m
-            // if compareFiles m then m.Source.Delete ()
-        Tree.iterLeaves move t
+
 
     // ### Composition ###
-    let folder = @"/Users/rolf/Documents/Mail_test"
+    // let folder = @"/Users/rolf/Documents/Mail_test"
 
     // let source = 
     //     { Name = Path.GetFileName folder 
@@ -194,7 +182,7 @@ module Transformer =
 
 
 
-    let destination = @"/Users/rolf/Desktop/test"
+    // let destination = @"/Users/rolf/Desktop/test"
 
     // Composition
 

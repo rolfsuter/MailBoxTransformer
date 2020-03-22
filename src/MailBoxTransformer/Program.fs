@@ -13,6 +13,20 @@ let rec readTree path =
         let branches = Seq.map readTree dirsAndFiles |> Seq.toList
         InternalNode (path, branches)
 
+let writeTree t =
+    let copy m =
+        Directory.CreateDirectory m.Destination.DirectoryName |> ignore
+        m.Source.CopyTo m.Destination.FullName |> ignore
+        printfn "Copied to %s" m.Destination.FullName
+    let compareFiles m =
+        let sourceStream = File.ReadAllBytes m.Source.FullName
+        let destinationStream = File.ReadAllBytes m.Destination.FullName
+        sourceStream = destinationStream
+    let move m =
+        copy m
+        // if compareFiles m then m.Source.Delete ()
+    Tree.iterLeaves move t
+
 /// Transforms the MailBoxes of the source directory and writes them 
 /// to the destination.
 let transformMailBox source destination = 

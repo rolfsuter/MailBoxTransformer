@@ -5,6 +5,12 @@ module Transformer =
     open System
     open System.IO
 
+    type MailBoxFile = 
+        { File: FileInfo }
+
+    type Move = 
+        { Source : FileInfo; 
+          Destination : FileInfo }
             
     // type MailBoxInfo = 
     //     { Name: string 
@@ -116,8 +122,7 @@ module Transformer =
         // recurse sourceTree  
 
     // // ---
-    type MailBoxFile = 
-        { File: FileInfo }
+
 
     let readMailBox file =
         file |> Option.map (fun x -> { File = x } )
@@ -135,7 +140,6 @@ module Transformer =
         | _  -> Tree.node destination (seq { Tree.leaf(FileInfo("")) } )    // Default value if there is a failure/no mailbox
 
 
-    type Move = { Source : FileInfo; Destination : FileInfo }
 
     /// Calculates the mailbox moves based on the source path in the leaves and
     /// the tree structere with the directory names stored in the tree nodes.

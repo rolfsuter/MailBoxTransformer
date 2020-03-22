@@ -2,7 +2,6 @@
 open System.IO
 
 open MailBoxTransformer
-// open MailBoxTransformer.Tree
 open MailBoxTransformer.Transformer
 
 let rec readTree path =

@@ -2,7 +2,10 @@ open System
 open System.IO
 
 // Tree datastructure and processing functions
-// Reference: https://fsharpforfunandprofit.com/posts/recursive-types-and-folds-3b
+// adapted from 
+// * https://github.com/ploeh/picture-archivist/blob/master/FSharp/ArchivePictures/Tree.fs (Copyright (c) 2018 Mark Seemann)
+// * https://fsharpforfunandprofit.com/posts/recursive-types-and-folds-3b (Copyright by Scott Wlaschin)
+// * https://gist.github.com/swlaschin/2b06fe266e3299a656c1 (Copyright by Scott Wlaschin)
 
 type Tree<'LeafData,'INodeData> =
     | LeafNode of 'LeafData

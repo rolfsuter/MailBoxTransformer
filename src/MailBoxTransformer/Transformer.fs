@@ -27,14 +27,10 @@ module Transformer =
     /// paths to the MailBoxes. Returns NONE if a leaf or node is not a MailBox.
     let rec findMailBoxes (sourceTree:Tree<FileInfo, FileInfo>) =
             match sourceTree with
-            | LeafNode x -> 
-                printfn "#unknown: %s" x.Name
-                LeafNode None
+            | LeafNode x ->                 LeafNode None
             | InternalNode (x, ys) when InternalNode (x, ys) |> isMailBox ->
-                printfn "#mbox   : %s" x.FullName
                 LeafNode (Some x)
             | InternalNode (x, ys) -> 
-                printfn "#node   : %s" x.FullName
                 let newNode = x
                 let newSubtrees = ys |> Seq.map findMailBoxes
                 InternalNode (newNode, newSubtrees)

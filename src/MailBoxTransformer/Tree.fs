@@ -11,10 +11,10 @@ type Tree<'LeafData,'INodeData> =
     | InternalNode of 'INodeData * Tree<'LeafData,'INodeData> seq
 
 module Tree = 
-    /// Creates a leaf
+    /// Create a leaf
     let leaf x = LeafNode x
 
-    /// Creates a node
+    /// Create a node
     let node x xs = InternalNode (x, xs)
 
     // cata is bottom-up recursion
@@ -29,19 +29,19 @@ module Tree =
     // choose is derived from https://blog.ploeh.dk/2019/09/16/picture-archivist-in-f/ (swapped the node an leave function)
     let choose f = cata (f >> Option.map LeafNode) (fun x -> Seq.choose id >> node x >> Some)
 
-//     // fold is top-down iteration    
-//     let rec fold fLeaf fNode acc (tree:Tree<'LeafData,'INodeData>) :'r = 
-//         let recurse = fold fLeaf fNode  
-//         match tree with
-//         | LeafNode leafInfo -> 
-//             fLeaf acc leafInfo 
-//         | InternalNode (nodeInfo,subtrees) -> 
-//             // determine the local accumulator at this level
-//             let localAccum = fNode acc nodeInfo
-//             // thread the local accumulator through all the subitems using Seq.fold
-//             let finalAccum = subtrees |> Seq.fold recurse localAccum 
-//             // ... and return it
-//             finalAccum
+    // fold is top-down iteration    
+    let rec fold fLeaf fNode acc (tree:Tree<'LeafData,'INodeData>) :'r = 
+        let recurse = fold fLeaf fNode  
+        match tree with
+        | LeafNode leafInfo -> 
+            fLeaf acc leafInfo 
+        | InternalNode (nodeInfo,subtrees) -> 
+            // determine the local accumulator at this level
+            let localAccum = fNode acc nodeInfo
+            // thread the local accumulator through all the subitems using Seq.fold
+            let finalAccum = subtrees |> Seq.fold recurse localAccum 
+            // ... and return it
+            finalAccum
 
     // bimap function
     /// map on the leaves as well as on the nodes
@@ -56,18 +56,18 @@ module Tree =
             let newSubtrees = subtrees |> Seq.map recurse 
             InternalNode (newNodeInfo, newSubtrees)
 
-//     /// map on the leaves
-//     let map f = bimap f id
+    /// map on the leaves
+    let map f = bimap f id
 
-//     // iter function
-//     let rec iter fLeaf fNode (tree:Tree<'LeafData,'INodeData>) = 
-//         let recurse = iter fLeaf fNode  
-//         match tree with
-//         | LeafNode leafInfo -> 
-//             fLeaf leafInfo
-//         | InternalNode (nodeInfo,subtrees) -> 
-//             fNode nodeInfo
-//             subtrees |> Seq.iter recurse 
+    // iter function
+    let rec iter fLeaf fNode (tree:Tree<'LeafData,'INodeData>) = 
+        let recurse = iter fLeaf fNode  
+        match tree with
+        | LeafNode leafInfo -> 
+            fLeaf leafInfo
+        | InternalNode (nodeInfo,subtrees) -> 
+            fNode nodeInfo
+            subtrees |> Seq.iter recurse 
 
     /// iter through the leaves. Does not act on the nodes.
     let rec iterLeaves f t =
@@ -77,6 +77,6 @@ module Tree =
         | InternalNode (nodeInfo, subtrees) ->
             subtrees |> Seq.iter recurse
 
-//     /// implementation variant of iterLeaves. Requires validation.
-//     let iterLeaves2 f t = iter f ignore t
+    /// implementation variant of iterLeaves. Requires validation.
+    let iterLeaves2 f t = iter f ignore t
     

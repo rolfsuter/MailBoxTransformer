@@ -1,5 +1,5 @@
 # MailBoxTransformer
-MailBoxTransformer transforms Apple Mail's mailbox exports to the structure of Thunderbirds local folders. This tool is written in F# for .NET Core 3.1. 
+MailBoxTransformer reads mailbox exports from Apple Mail and transforms them to the structure of Thunderbird's local folders. This tool is written in F# for .NET Core 3.1. 
 
 ## Prerequisites
 * [.NET Core 3.1](https://dotnet.microsoft.com/download ".NET Core download page")

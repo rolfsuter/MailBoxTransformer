@@ -20,5 +20,5 @@ MailBoxTransformer transforms Apple Mail's mailbox exports to the structure of T
   * Scott Wlaschin: ['Trees in the real world'](https://fsharpforfunandprofit.com/posts/recursive-types-and-folds-3b/) – Copyright © 2015 fsharpforfunandprofit.com / Scott Wlaschin
 
 ## License
-* MailBoxTransformer is licensed under the [MIT](LICENSE.TXT) license.
+* MailBoxTransformer is licensed under the [MIT](LICENSE.txt) license.
 * Copyright © 2020 [Rolf Suter](https://rolfsuter.ch)
